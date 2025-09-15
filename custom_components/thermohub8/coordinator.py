@@ -24,7 +24,6 @@ class ThermoHub8Coordinator(DataUpdateCoordinator[Dict[str, Any]]):
     ) -> None:
         super().__init__(
             hass,
-            logger=hass.helpers.logger.LoggerAdapter(hass.logger, extra={"domain": DOMAIN}),
             name=f"{DOMAIN}_coordinator",
             update_interval=timedelta(seconds=scan_interval or DEFAULT_SCAN_INTERVAL),
         )
