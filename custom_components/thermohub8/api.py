@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 import asyncio
 import yarl
-from aiohttp import ClientSession, ClientResponseError
 import logging
+from aiohttp import ClientSession, ClientResponseError
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class ThermoHub8Client:
     """
@@ -26,17 +27,17 @@ class ThermoHub8Client:
         self._base_url = str(yarl.URL(base_url).with_scheme(yarl.URL(base_url).scheme or "http"))
         self._api_key = api_key
         self._ssl = verify_ssl
-        _LOGGER.debug("Init ThermoHub8Client base_url=%s verify_ssl=%s", self._base_url, verify_ssl)
 
+        _LOGGER.debug("ThermoHub8Client initialized base_url=%s verify_ssl=%s", self._base_url, verify_ssl)
 
     async def async_get_readings(self) -> Dict[str, Any]:
-        # Standard-Endpunkt – bei Bedarf anpassen
         url = str(yarl.URL(self._base_url) / "api" / "v1" / "readings")
-        _LOGGER.debug("Fetching ThermoHub8 readings from %s", url)
-
         headers = {}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
+
+        _LOGGER.debug("Requesting ThermoHub8 readings from %s", url)
+
         try:
             async with self._session.get(url, headers=headers, ssl=self._ssl, timeout=10) as resp:
                 resp.raise_for_status()
@@ -52,10 +53,10 @@ class ThermoHub8Client:
 
     @staticmethod
     def normalize_payload(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        _LOGGER.debug("Normalizing ThermoHub8 payload")
         sensors = payload.get("sensors") or []
         normalized: List[Dict[str, Any]] = []
         for idx, item in enumerate(sensors, start=1):
-            # Fallbacks
             sensor_id = item.get("id", idx)
             name = item.get("name") or f"Sensor {sensor_id}"
             value = item.get("value")
@@ -68,5 +69,5 @@ class ThermoHub8Client:
                     "unit": unit,
                 }
             )
+            _LOGGER.debug("Normalized sensor %s: name=%s value=%s unit=%s", sensor_id, name, value, unit)
         return normalized
-
