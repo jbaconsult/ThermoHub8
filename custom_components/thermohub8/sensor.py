@@ -12,6 +12,9 @@ from .const import DOMAIN, MAX_SENSORS, ATTR_LAST_UPDATE
 from .coordinator import ThermoHub8Coordinator
 from .api import ThermoHub8Client
 
+import logging
+_LOGGER = logging.getLogger(__name__)
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: ThermoHub8Coordinator = data["coordinator"]
@@ -19,6 +22,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     # Erzeuge Entitäten dynamisch basierend auf der ersten Aktualisierung
     payload = coordinator.data or {}
     normalized = ThermoHub8Client.normalize_payload(payload)
+
+    _LOGGER.info("ThermoHub8 creating up to %d sensor entities", MAX_SENSORS)
+    _LOGGER.debug("Initial normalized sensors: %s", [s.get("name") for s in normalized])
 
     entities: List[ThermoHub8Sensor] = []
     for idx, item in enumerate(normalized[:MAX_SENSORS]):
@@ -45,6 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         )
 
     async_add_entities(entities)
+    _LOGGER.info("ThermoHub8 added %d sensor entities", len(entities))
 
 class ThermoHub8Sensor(CoordinatorEntity[ThermoHub8Coordinator], SensorEntity):
     _attr_has_entity_name = True
@@ -65,6 +72,9 @@ class ThermoHub8Sensor(CoordinatorEntity[ThermoHub8Coordinator], SensorEntity):
         self._unit = unit
         self._optional = optional
 
+        _LOGGER.debug("ThermoHub8Sensor created: id=%s name=%s unit=%s optional=%s",
+                      sensor_id, name, unit, optional)
+        
         self._attr_unique_id = f"{DOMAIN}_{entry_id}_sensor_{sensor_id}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry_id)},
@@ -87,8 +97,10 @@ class ThermoHub8Sensor(CoordinatorEntity[ThermoHub8Coordinator], SensorEntity):
         if not super().available:
             return False
         normalized = ThermoHub8Client.normalize_payload(self.coordinator.data or {})
-        return any(item.get("id") == self._sensor_id for item in normalized) or self._optional
-
+        ok = any(item.get("id") == self._sensor_id for item in normalized) or self._optional
+        _LOGGER.debug("Sensor %s available=%s", self._sensor_id, ok)
+        return ok
+        
     @property
     def extra_state_attributes(self) -> Dict[str, Any] | None:
         ts = (self.coordinator.data or {}).get("ts")
@@ -99,7 +111,9 @@ class ThermoHub8Sensor(CoordinatorEntity[ThermoHub8Coordinator], SensorEntity):
         normalized = ThermoHub8Client.normalize_payload(self.coordinator.data or {})
         for item in normalized:
             if item.get("id") == self._sensor_id:
-                return item.get("value")
+                value = item.get("value")
+                _LOGGER.debug("Sensor %s (%s) value=%s", self._sensor_id, self.name, value)
+                return value
         # wenn optionaler Sensor, aber (noch) nicht vorhanden
         return None
 

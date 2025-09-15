@@ -8,9 +8,9 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import logging
 
-_LOGGER: logging.Logger = logging.getLogger(__package__)
+import logging
+_LOGGER = logging.getLogger(__name__)
 
 from .const import (
     DOMAIN,
@@ -38,7 +38,7 @@ STEP_OPTIONS_DATA_SCHEMA = vol.Schema(
 )
 
 async def _validate_connection(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str, Any]:
-    _LOGGER.info('Validate THermohub8 Logging')
+    _LOGGER.info("Validating ThermoHub8 connection to %s", data.get("base_url"))
     session = async_get_clientsession(hass)
     client = ThermoHub8Client(
         session=session,
@@ -49,8 +49,8 @@ async def _validate_connection(hass: HomeAssistant, data: Dict[str, Any]) -> Dic
 
     # einmalig abrufen, um zu prüfen
     payload = await client.async_get_readings()
-    _ = ThermoHub8Client.normalize_payload(payload)  # Validiert grob die Struktur
-    _LOGGER.info('payload received: \n' + payload)
+    sensors = ThermoHub8Client.normalize_payload(payload)
+    _LOGGER.info("Validation OK: %d sensor(s) found", len(sensors))
     return payload
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -61,10 +61,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 await _validate_connection(self.hass, user_input)
-            except Exception:  # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
+                _LOGGER.warning("ThermoHub8 validation failed: %s", e)
                 errors["base"] = "cannot_connect"
             else:
                 # Eindeutigkeit über Basis-URL
+                _LOGGER.info("ThermoHub8 creating config entry for %s", user_input.get("base_url"))
                 await self.async_set_unique_id(user_input[CONF_BASE_URL].rstrip("/"))
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(title="ThermoHub8", data=user_input)
