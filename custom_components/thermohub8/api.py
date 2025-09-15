@@ -6,6 +6,8 @@ import yarl
 from aiohttp import ClientSession, ClientResponseError
 import logging
 
+_LOGGER: logging.Logger = logging.getLogger(__package__)
+
 class ThermoHub8Client:
     """
     Minimaler REST-Client für ThermoHub8.
@@ -28,7 +30,7 @@ class ThermoHub8Client:
     async def async_get_readings(self) -> Dict[str, Any]:
         # Standard-Endpunkt – bei Bedarf anpassen
         url = str(yarl.URL(self._base_url) / "api" / "v1" / "readings")
-        logging.info('connecting to: ' + url)
+        _LOGGER.info('connecting to: ' + url)
 
         headers = {}
         if self._api_key:
@@ -39,10 +41,10 @@ class ThermoHub8Client:
                 resp.raise_for_status()
                 return await resp.json()
         except ClientResponseError as e:                    
-            logging.error(f"ThermoHub8 API error: {e.status} {e.message}")
+            _LOGGER.error(f"ThermoHub8 API error: {e.status} {e.message}")
             raise ConnectionError(f"ThermoHub8 API error: {e.status} {e.message}") from e
         except asyncio.TimeoutError as e:
-            logging.error("ConnectionError ThermoHub8 API timeout")
+            _LOGGER.error("ConnectionError ThermoHub8 API timeout")
             raise ConnectionError("ThermoHub8 API timeout") from e
 
     @staticmethod
