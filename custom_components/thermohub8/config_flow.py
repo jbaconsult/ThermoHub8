@@ -46,6 +46,8 @@ async def _validate_connection(hass: HomeAssistant, data: Dict[str, Any]) -> Dic
         api_key=data.get(CONF_API_KEY),
         verify_ssl=data.get(CONF_VERIFY_SSL, True),
     )
+    
+    _LOGGER.info("Starting Validation")
 
     # einmalig abrufen, um zu prüfen
     payload = await client.async_get_readings()

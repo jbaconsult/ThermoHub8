@@ -22,11 +22,12 @@ class ThermoHub8Client:
     """
 
     def __init__(self, session: ClientSession, base_url: str, api_key: Optional[str] = None, verify_ssl: bool = True) -> None:
-        _LOGGER.debug("Init ThermoHub8Client base_url=%s verify_ssl=%s", self._base_url, verify_ssl)
         self._session = session
         self._base_url = str(yarl.URL(base_url).with_scheme(yarl.URL(base_url).scheme or "http"))
         self._api_key = api_key
         self._ssl = verify_ssl
+        _LOGGER.debug("Init ThermoHub8Client base_url=%s verify_ssl=%s", self._base_url, verify_ssl)
+
 
     async def async_get_readings(self) -> Dict[str, Any]:
         # Standard-Endpunkt – bei Bedarf anpassen
