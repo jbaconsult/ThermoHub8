@@ -8,6 +8,7 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import logging
 
 from .const import (
     DOMAIN,
@@ -35,6 +36,7 @@ STEP_OPTIONS_DATA_SCHEMA = vol.Schema(
 )
 
 async def _validate_connection(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str, Any]:
+    logging.info('Validate Logging')
     session = async_get_clientsession(hass)
     client = ThermoHub8Client(
         session=session,
@@ -42,9 +44,11 @@ async def _validate_connection(hass: HomeAssistant, data: Dict[str, Any]) -> Dic
         api_key=data.get(CONF_API_KEY),
         verify_ssl=data.get(CONF_VERIFY_SSL, True),
     )
+
     # einmalig abrufen, um zu prüfen
     payload = await client.async_get_readings()
     _ = ThermoHub8Client.normalize_payload(payload)  # Validiert grob die Struktur
+    logging.info('payload received: ' + payload)
     return payload
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

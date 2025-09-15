@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 import asyncio
 import yarl
 from aiohttp import ClientSession, ClientResponseError
+import logging
 
 class ThermoHub8Client:
     """
@@ -27,6 +28,8 @@ class ThermoHub8Client:
     async def async_get_readings(self) -> Dict[str, Any]:
         # Standard-Endpunkt – bei Bedarf anpassen
         url = str(yarl.URL(self._base_url) / "api" / "v1" / "readings")
+        logging.info('connecting to: ' + url)
+
         headers = {}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
@@ -35,9 +38,11 @@ class ThermoHub8Client:
             async with self._session.get(url, headers=headers, ssl=self._ssl, timeout=10) as resp:
                 resp.raise_for_status()
                 return await resp.json()
-        except ClientResponseError as e:
+        except ClientResponseError as e:                    
+            logging.error(f"ThermoHub8 API error: {e.status} {e.message}")
             raise ConnectionError(f"ThermoHub8 API error: {e.status} {e.message}") from e
         except asyncio.TimeoutError as e:
+            logging.error("ConnectionError ThermoHub8 API timeout")
             raise ConnectionError("ThermoHub8 API timeout") from e
 
     @staticmethod
