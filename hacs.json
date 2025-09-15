@@ -1,5 +1,5 @@
 {
   "name": "ThermoHub8",
-  "content_in_root": true,
+  "content_in_root": false,
   "country": ["DE"]
 }
