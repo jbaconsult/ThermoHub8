@@ -1,0 +1,12 @@
+{
+  "title": "ThermoHub8",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit ThermoHub8 verbinden",
+        "description": "Gib die Basis-URL und optional einen API-Schlüssel ein."
+      }
+    }
+  }
+}
+

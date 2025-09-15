@@ -1,0 +1,14 @@
+{
+  "domain": "thermohub8",
+  "name": "ThermoHub8",
+  "documentation": "https://example.com/docs/thermohub8",
+  "issue_tracker": "https://example.com/issues/thermohub8",
+  "version": "0.1.0",
+  "codeowners": ["@johannes"],
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "config_flow": true,
+  "requirements": [],
+  "loggers": ["custom_components.thermohub8"]
+}
+

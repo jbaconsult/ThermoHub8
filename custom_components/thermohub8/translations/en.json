@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to ThermoHub8",
+        "description": "Enter the base URL and optional API key.",
+        "data": {
+          "base_url": "Base URL (e.g. http://thermohub.local:8080)",
+          "api_key": "API key (optional)",
+          "verify_ssl": "Verify SSL certificates"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to ThermoHub8. Check URL/API key and try again."
+    },
+    "abort": {
+      "already_configured": "ThermoHub8 is already configured."
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "ThermoHub8 Options",
+          "data": {
+            "scan_interval": "Update interval (seconds)"
+          }
+        }
+      }
+    }
+  }
+}
+
