@@ -42,7 +42,7 @@ class ThermoHub8Client:
             async with self._session.get(url, headers=headers, ssl=self._ssl, timeout=10) as resp:
                 resp.raise_for_status()
                 data = await resp.json()
-                _LOGGER.debug("Received ThermoHub8 payload keys: %s", list(data.keys()))
+                _LOGGER.debug("Received ThermoHub8 payload: %s", data)
                 return data
         except ClientResponseError as e:
             _LOGGER.warning("ThermoHub8 API error (%s): %s", e.status, e.message)
