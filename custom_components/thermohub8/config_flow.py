@@ -42,7 +42,7 @@ async def _validate_connection(hass: HomeAssistant, data: Dict[str, Any]) -> Dic
     session = async_get_clientsession(hass)
     client = ThermoHub8Client(
         session=session,
-        base_url=data[CONF_BASE_URL],
+        base_url=data.get("base_url"),
         api_key=data.get(CONF_API_KEY),
         verify_ssl=data.get(CONF_VERIFY_SSL, True),
     )
