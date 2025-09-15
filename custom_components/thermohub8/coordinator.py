@@ -15,7 +15,6 @@ _LOGGER = logging.getLogger(__name__)
 
 class ThermoHub8Coordinator(DataUpdateCoordinator[Dict[str, Any]]):
     """Koordinator, der periodisch Messwerte lädt."""
-
     def __init__(
         self,
         hass: HomeAssistant,
@@ -41,3 +40,4 @@ class ThermoHub8Coordinator(DataUpdateCoordinator[Dict[str, Any]]):
             _LOGGER.error("ThermoHub8 update failed: %s", err)
             raise
         return payload
+    
