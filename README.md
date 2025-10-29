@@ -34,14 +34,15 @@ ThermoHub8 consists of three major parts:
 
 ## 🔧 Components
 
-| Component | Description | Notes / Links (to be added) |
+| Component | Description | Notes / Links |
 |------------|--------------|-----------------------------|
-| **ESP32** | Main controller with Wi-Fi and serial interface | [Link] |
-| **MAX485 module** | RS-485 transceiver for Modbus communication | [Link] |
-| **PT1000 Modbus modules** | 8 temperature input converters (Modbus RTU) | [Link] |
-| **Joystick module** | Analog joystick for navigation (X/Y via ADC) | [Link] |
-| **LCD 16x4 I²C display** | Local temperature display | [Link] |
-| **DC power converter** | Converts 12V DC to 5V for ESP32 and peripherals | [Link] |
+| **ESP32** | Main controller with Wi-Fi and serial interface | [https://de.aliexpress.com/item/1005007671225942.html] |
+| **MAX485 module** | RS-485 transceiver for Modbus communication | [https://de.aliexpress.com/item/1005006090281569.html] |
+| **PT1000 Modbus modules** | 8 temperature input converters (Modbus RTU) | [https://de.aliexpress.com/item/1005003116560748.html] |
+| **Joystick module** | Analog joystick for navigation (X/Y via ADC) | [https://de.aliexpress.com/item/1005007070151087.html] |
+| **LCD 16x4 I²C display** | Local temperature display, ATTENTION: please make sure to get the version WITH the IIC controller chip | [https://de.aliexpress.com/item/32550720999.html] |
+| **DC power converter** | Converts 12V DC to 5V for ESP32 and peripherals, I would recommend to get something with a plug and maybe an on/pff switch | [https://de.aliexpress.com/item/1005007924460475.html] |
+| **12V DC power supply** | Simple 12V power supply | [https://de.aliexpress.com/item/1005007264933490.html] |
 
 > 💡 Add pictures or wiring diagrams here once available.  
 > Suggested folder: `docs/images/`  
@@ -77,25 +78,21 @@ ThermoHub8 consists of three major parts:
            |
            | UART1 (RX=19, TX=18)
            |
-       +---+---+
-       |  ESP32 |
-       |         |
+       +---+-----+
+       |  ESP32  |
+       |         |        +-----+------+
+       |         |--------| Joystick   |
+       |         |        +------------+
        |  - Reads Modbus
        |  - Hosts REST API
        |  - Runs Web UI
-       |  - Updates LCD
-       +---+---+
+       |  - Updates LCD       
+       +---+-----+
            |
            | I²C (SDA=4, SCL=5)
            |
      +-----+------+
      | LCD 16x4   |
-     +------------+
-           |
-           | ADC (X=32, Y=33)
-           |
-     +-----+------+
-     | Joystick   |
      +------------+
 ```
 
