@@ -76,12 +76,13 @@ ThermoHub8 consists of three major parts:
      |   MAX485  |
      +-----+-----+
            |
-           | UART1 (RX=19, TX=18)
+           | UART1 (RX=17, TX=16)
            |
        +---+-----+
        |  ESP32  |
        |         |        +-----+------+
        |         |--------| Joystick   |
+       |         |        | x=34, Y=35 |
        |         |        +------------+
        |  - Reads Modbus
        |  - Hosts REST API
@@ -89,12 +90,16 @@ ThermoHub8 consists of three major parts:
        |  - Updates LCD       
        +---+-----+
            |
-           | I²C (SDA=4, SCL=5)
+           | I²C (SDA=21, SCL=22)
            |
      +-----+------+
      | LCD 16x4   |
      +------------+
 ```
+## ⚡ Power distribution:
+- The 12V get's connected to the **DC-DC step-down-converter** and to the **PT1000-Modbus-Module**.
+- The **ESP32** and the **LCD-Display** both are connected to the 5V
+- The **joystick** get's connected to the **3V** output of the ESP32. This is important, as the analog leves in the code are calibrated to these levels. Also with both running on 5V it seems to cause problems. 
 
 ---
 
@@ -149,24 +154,6 @@ Integration documentation:
 
 ---
 
-## ⚡ Power Supply
-
-- Input: 12 V DC (typical)
-- Conversion: via DC-DC step-down converter (to 5 V DC)
-- Powering ESP32, LCD, MAX485, and sensors
-- Typical power draw: 150–250 mA depending on LCD backlight and Modbus load
-
----
-
-## 🧱 Assembly Notes
-
-- Keep RS-485 wiring twisted and shielded for stability.  
-- Terminate RS-485 bus with 120 Ω resistors on both ends.  
-- Use short, clean I²C and analog lines for the joystick and display.  
-- Mount ESP32 on a perforated PCB or custom carrier board.  
-
----
-
 ## 🔒 License
 
 ### 📜 MIT License
@@ -214,14 +201,6 @@ If you find a bug, have an idea, or want to improve the documentation, feel free
 
 ---
 
-## 📸 Gallery (to be added)
+## Disclaimer
 
-Place your images here, for example:
-
-```
-docs/images/
-├─ overview.jpg
-├─ wiring.jpg
-├─ assembled_front.jpg
-├─ assembled_back.jpg
-```
+Parts of the code and the documentation have been created with Claude.AI.
