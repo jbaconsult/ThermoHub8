@@ -1,0 +1,7 @@
+.pio
+.vscode
+.github
+logs/
+lib/
+include/
+test/

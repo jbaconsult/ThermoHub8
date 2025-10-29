@@ -1,217 +1,326 @@
-# ThermoHub8 – ESP32 Firmware (RS-485/Modbus → REST API → Home Assistant)
+# Thermohub8 - ESP32 PT1000 Sensor Monitoring System
 
-Dieses Projekt liest bis zu **8 Sensorwerte** per **Modbus RTU (RS-485/MAX485)** mit einem **ESP32**, zeigt sie auf einem **I²C-LCD (16×4)** an, stellt sie über eine **REST-API** unter `/api/v1/readings` bereit und bietet eine **Weboberfläche** zum **Benennen** der Sensoren (Persistenz im Flash/NVS).  
-Die API ist kompatibel zur Home-Assistant-Custom-Integration „ThermoHub8“.
+Ein ESP32-basiertes System zum Auslesen von PT1000-Temperatursensoren über Modbus mit LCD-Display und REST-API.
 
----
+## Features
 
-## Inhaltsverzeichnis
+- ✅ Auslesen von 8 PT1000-Sensoren über Modbus (konfigurierbar)
+- ✅ LCD-Display (16x4) mit Joystick-Steuerung zum Scrollen
+- ✅ REST-API für Sensordaten und Konfiguration
+- ✅ Persistente Speicherung der Sensornamen im ESP32-Flash
+- ✅ Web-Interface zur Statusanzeige
+- ✅ Automatische Aktualisierung alle 1000ms
 
-- [Funktionen](#funktionen)  
-- [Hardware](#hardware)  
-- [Pinbelegung & Verdrahtung](#pinbelegung--verdrahtung)  
-- [Bibliotheken](#bibliotheken)  
-- [Konfiguration](#konfiguration)  
-- [Build & Flash](#build--flash)  
-- [REST API](#rest-api)  
-- [Web UI](#web-ui)  
-- [Persistenz (NVS)](#persistenz-nvs)  
-- [LCD & Tasten](#lcd--tasten)  
-- [mDNS](#mdns)  
-- [Beispiel-JSON](#beispiel-json)  
-- [Sicherheit (optional)](#sicherheit-optional)  
-- [Troubleshooting](#troubleshooting)  
-- [Lizenz](#lizenz)
+## Hardware-Anforderungen
 
----
+### Komponenten
+- ESP32 Development Board
+- MAX485 I2C Modbus-Modul
+- PT1000-Sensoren mit Modbus-Konverter
+- LCD 16x4 mit I2C-Interface (PCF8574)
+- Analog-Joystick (2-Achsen + Taster)
 
-## Funktionen
+### Pin-Belegung
 
-- **Modbus RTU über RS-485** (MAX485) – liest bis zu 8 Sensoren (ID 1…8; Register konfigurierbar).  
-- **REST-API** `/api/v1/readings` liefert JSON für Home Assistant.  
-- **Weboberfläche** `/` zum Umbenennen der Sensoren; **POST** `/api/v1/names` speichert Namen.  
-- **LCD 16×4** zeigt Sensorwerte an, **Tasten (UP/DOWN)** blättern.  
-- **Persistenz** der Sensornamen via NVS (Flash).  
-- **mDNS** (z. B. `http://thermohub.local/`) für bequemen Zugriff.  
+#### Modbus (RS485)
+- TX: GPIO 17
+- RX: GPIO 16
+- DE/RE: GPIO 4
 
-> Hinweis zu Pins: Ursprünglich war GPIO4 doppelt verplant (RS-485 & I²C). In dieser Firmware liegt **RS-485: TX=18, RX=19, DE/RE=23**, **I²C: SDA=4, SCL=5** – somit keine Kollision.
+#### I2C (LCD)
+- SDA: GPIO 21
+- SCL: GPIO 22
 
----
+#### Joystick
+- X-Achse: GPIO 34 (ADC)
+- Y-Achse: GPIO 35 (ADC)
+- Taster: GPIO 32
 
-## Hardware
+## Software-Anforderungen
 
-- **ESP32 DevKit** (z. B. ESP32-WROOM-32)  
-- **MAX485** RS-485-Transceiver  
-- **I²C-LCD 16×4** (z. B. PCF8574-Backpack, Adresse meist `0x27` oder `0x3F`)  
-- **2 Taster** (UP/DOWN), intern Pull-Ups genutzt  
-- Verkabelung für RS-485 (A/B), I²C (SDA/SCL), Stromversorgung
+### Arduino IDE
+- Arduino IDE 1.8.x oder 2.x
+- ESP32 Board Support Package
 
----
+### Erforderliche Bibliotheken
 
-## Pinbelegung & Verdrahtung
+Installieren Sie folgende Bibliotheken über den Arduino Library Manager:
 
-| Funktion            | Pin ESP32 | Hinweis                                   |
-|---------------------|-----------|-------------------------------------------|
-| RS-485 TX           | GPIO **18** | UART1 TX                                  |
-| RS-485 RX           | GPIO **19** | UART1 RX                                  |
-| RS-485 DE/RE        | GPIO **23** | HIGH = Senden, LOW = Empfangen             |
-| I²C SDA (LCD)       | GPIO **4**  | I²C Daten                                  |
-| I²C SCL (LCD)       | GPIO **5**  | I²C Takt                                   |
-| Button UP           | GPIO **25** | `INPUT_PULLUP`, aktiv **LOW**              |
-| Button DOWN         | GPIO **26** | `INPUT_PULLUP`, aktiv **LOW**              |
+```
+- ESP32 by Espressif Systems
+- ESPAsyncWebServer by me-no-dev
+- AsyncTCP by me-no-dev
+- ArduinoJson by Benoit Blanchon (Version 6.x)
+- ModbusMaster by Doc Walker
+- LiquidCrystal_I2C by Frank de Brabander
+```
 
-**RS-485 A/B** mit dem Sensor-Bus verbinden.  
-**I²C-LCD** an 3V3/GND/SDA/SCL.  
-**Taster** zwischen Pin und GND (Pull-Ups sind intern aktiv).
+## Installation
 
----
+1. **Arduino IDE vorbereiten**
+   - Installieren Sie die ESP32 Board-Unterstützung
+   - Installieren Sie alle erforderlichen Bibliotheken
 
-## Bibliotheken
+2. **Projekt herunterladen**
+   ```bash
+   git clone <repository-url>
+   cd Thermohub8
+   ```
 
-Bitte im Arduino-IDE Bibliotheksverwalter oder via Git installieren:
+3. **WLAN-Konfiguration anpassen**
+   
+   Öffnen Sie `Thermohub8.ino` und passen Sie folgende Zeilen an:
+   ```cpp
+   const char* WIFI_SSID = "IhrWLAN-Name";
+   const char* WIFI_PASSWORD = "IhrWLAN-Passwort";
+   ```
 
-- **ESPAsyncWebServer** und **AsyncTCP**  
-- **LiquidCrystal_I2C** (oder kompatibel)  
-- **ModbusMaster**  
-- **ArduinoJson**
+4. **Hochladen**
+   - Wählen Sie das richtige ESP32-Board aus
+   - Wählen Sie den richtigen COM-Port
+   - Klicken Sie auf "Upload"
 
-> Alternativ mit **PlatformIO** (siehe unten), dort werden Libs via `platformio.ini` verwaltet.
-
----
+5. **Serielle Konsole öffnen**
+   - Öffnen Sie den Serial Monitor (115200 Baud)
+   - Notieren Sie die IP-Adresse des ESP32
 
 ## Konfiguration
 
-Öffne die Sketch-Datei und passe die Konstanten an:
+### Anzahl der Sensoren ändern
+
+In `Thermohub8.ino`:
+```cpp
+#define NUM_SENSORS 8  // Ändern Sie diesen Wert
+```
+
+### Modbus-Einstellungen
 
 ```cpp
-#define WIFI_SSID       "DEINE_SSID"
-#define WIFI_PASS       "DEIN_PASSWORT"
-#define MDNS_NAME       "thermohub"    // -> http://thermohub.local/
-
-// Modbus
-#define MODBUS_BAUD     9600
-#define MODBUS_CONFIG   SERIAL_8N1
-#define MODBUS_START_REG  0x0000        // Startregister
-#define MODBUS_READ_COUNT 1             // Anzahl Register
-// In readSensorValue(): ggf. Skalierung anpassen (z.B. raw/10.0f)
-
-// LCD
-#define LCD_I2C_ADDR    0x27            // ggf. 0x3F
-#define LCD_COLS        16
-#define LCD_ROWS        4
-
-// Polling
-#define POLL_INTERVAL_MS 1000           // 1s
+#define MODBUS_SLAVE_ID 1           // Slave-ID des Modbus-Konverters
+#define MODBUS_START_REGISTER 0x48  // Startregister (72 dezimal)
+#define MODBUS_BAUDRATE 9600        // Baudrate
 ```
 
----
+### Joystick-Kalibrierung
 
-## Build & Flash
+Falls der Joystick nicht korrekt reagiert, passen Sie die Schwellwerte an:
 
-### Arduino IDE
-
-1. **Board**: *ESP32 Dev Module*  
-2. **Port**: seriellen Port des ESP32 wählen  
-3. **PSRAM**: aus (nicht erforderlich)  
-4. **Sketch kompilieren & hochladen**
-
-### PlatformIO (empfohlen)
-
-```ini
-[env:esp32dev]
-platform = espressif32
-board = esp32dev
-framework = arduino
-monitor_speed = 115200
-
-lib_deps =
-  me-no-dev/ESP Async WebServer @ ^1.2.3
-  me-no-dev/AsyncTCP @ ^1.1.1
-  marcoschwartz/LiquidCrystal_I2C @ ^1.1.4
-  4-20ma/ModbusMaster @ ^2.0.1
-  bblanchon/ArduinoJson @ ^7
+```cpp
+#define JOY_MIN_VAL 1200      // Minimalwert
+#define JOY_MAX_VAL 4095      // Maximalwert
+#define JOY_CENTER_VAL 2559   // Mittelwert
+#define JOY_DEADZONE 300      // Totbereich
 ```
 
----
-
-## REST API
-
-### `GET /api/v1/readings`
-
-```json
-{
-  "sensors": [
-    {"id":1,"name":"Wohnzimmer","value":21.3,"unit":"°C"}
-  ],
-  "ts": "1970-01-01T00:00:00Z"
+Optional können Sie die Achsen invertieren:
+```cpp
+void initJoystick() {
+    // ...
+    joystick.setInvertX(true);  // X-Achse invertieren
+    joystick.setInvertY(true);  // Y-Achse invertieren
 }
 ```
 
-### `POST /api/v1/names`
+**Debug-Modus aktivieren:**
 
-```json
-{ "1": "Wohnzimmer", "2": "Küche" }
-```
-
----
-
-## Web UI
-
-- **`GET /`** liefert HTML-Seite zum Umbenennen der Sensoren.  
-- Speichern über **POST** `/api/v1/names`.  
-
----
-
-## Persistenz (NVS)
-
-- Namen mit **Preferences** in `thermohub/name1`…`name8`.  
-- Boot lädt diese, sonst Defaults `Sensor 1`…`8`.
-
----
-
-## LCD & Tasten
-
-- LCD zeigt 3 Sensoren gleichzeitig an.  
-- UP/DOWN-Buttons scrollen.
-
----
-
-## mDNS
-
-- Zugriff via `http://thermohub.local/`  
-- Falls `.local` nicht geht: IP-Adresse verwenden.
-
----
-
-## Beispiel-JSON
-
-```json
-{
-  "sensors": [
-    { "id": 1, "name": "Wohnzimmer", "value": 21.3, "unit": "°C" },
-    { "id": 2, "name": "Küche", "value": 22.5, "unit": "°C" }
-  ],
-  "ts": "2025-09-15T12:34:56Z"
+Für die Fehlersuche können Sie den Joystick Debug-Modus aktivieren:
+```cpp
+void initJoystick() {
+    // ...
+    joystick.setDebugMode(true);  // Debug-Ausgaben aktivieren
 }
 ```
 
----
+Im Debug-Modus werden folgende Informationen über die serielle Konsole ausgegeben:
+- Rohwerte von X- und Y-Achse (alle 500ms)
+- Aktuelle Position des Joysticks
+- Delta-Werte vom Zentrum (alle 1000ms)
+- Positions-Änderungen in Echtzeit
+- Switch-Ereignisse
 
-## Sicherheit (optional)
+Beispiel-Ausgabe:
+```
+=== Joystick Debug-Modus aktiviert ===
+Joystick Raw: X=2559 Y=2559 | Position: CENTER
+Calculate: deltaX=0 deltaY=0 | abs(deltaX)=0 abs(deltaY)=0
+>>> Position geändert: CENTER -> UP
+>>> Joystick Switch gedrückt
+```
 
-- API-Key über `Authorization: Bearer <KEY>` prüfen.  
+## Bedienung
 
----
+### LCD-Display
 
-## Troubleshooting
+- **Joystick hoch**: Eine Zeile nach oben scrollen
+- **Joystick runter**: Eine Zeile nach unten scrollen
+- **Joystick-Taster**: Reserviert für zukünftige Funktionen
 
-- **Keine Werte:** Modbus-Parameter prüfen (Baudrate, Slave-ID, Register).  
-- **LCD leer:** Adresse (0x27/0x3F) oder SDA/SCL prüfen.  
-- **.local nicht erreichbar:** IP nutzen.  
-- **Zeit „1970…“:** NTP in Firmware ergänzen.  
+Das Display zeigt:
+```
+Sensorname  XX.X°C
+```
 
----
+### Web-Interface
+
+Öffnen Sie im Browser:
+```
+http://thermohub8.local/
+```
+oder
+```
+http://<ESP32-IP-Adresse>/
+```
+
+Die Status-Seite zeigt alle Sensoren mit aktuellen Werten und aktualisiert sich automatisch alle 5 Sekunden.
+
+## REST-API
+
+### Sensordaten abrufen
+
+**Endpunkt:** `GET /api/v1/sensordata`
+
+**Antwort:**
+```json
+{
+  "sensors": [
+    {
+      "id": 0,
+      "name": "Sensor 1",
+      "temperature": 23.5,
+      "unit": "°C"
+    },
+    {
+      "id": 1,
+      "name": "Vorlauf",
+      "temperature": 45.2,
+      "unit": "°C"
+    }
+  ]
+}
+```
+
+**Beispiel mit curl:**
+```bash
+curl http://thermohub8.local/api/v1/sensordata
+```
+
+**Beispiel mit Python:**
+```python
+import requests
+
+response = requests.get('http://thermohub8.local/api/v1/sensordata')
+data = response.json()
+
+for sensor in data['sensors']:
+    print(f"{sensor['name']}: {sensor['temperature']}°C")
+```
+
+### Sensorname ändern
+
+**Endpunkt:** `POST /api/v1/sensor`
+
+**Request Body:**
+{
+  "id": 0,
+  "name": "Vorlauf Heizung"
+}
+```json
+```
+
+**Antwort:**
+```json
+{
+  "success": true,
+  "id": 0,
+  "name": "Vorlauf Heizung"
+}
+```
+
+**Beispiel mit curl:**
+```bash
+curl -X POST http://thermohub8.local/api/v1/sensor \
+  -H "Content-Type: application/json" \
+  -d '{"id": 0, "name": "Vorlauf Heizung"}'
+```
+
+**Beispiel mit Python:**
+```python
+import requests
+
+data = {
+    "id": 0,
+    "name": "Vorlauf Heizung"
+}
+
+response = requests.post('http://thermohub8.local/api/v1/sensor', json=data)
+print(response.json())
+```
+
+**Beispiel mit JavaScript:**
+```javascript
+fetch('http://thermohub8.local/api/v1/sensor', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        id: 0,
+        name: 'Vorlauf Heizung'
+    })
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+## Modbus-Register
+
+Das System liest die Temperaturdaten wie folgt:
+
+| Sensor | Register (Hex) | Register (Dez) | Datentyp |
+|--------|----------------|----------------|----------|
+| 0      | 0x48-0x49      | 72-73          | Float32  |
+| 1      | 0x4A-0x4B      | 74-75          | Float32  |
+| 2      | 0x4C-0x4D      | 76-77          | Float32  |
+| 3      | 0x4E-0x4F      | 78-79          | Float32  |
+| 4      | 0x50-0x51      | 80-81          | Float32  |
+| 5      | 0x52-0x53      | 82-83          | Float32  |
+| 6      | 0x54-0x55      | 84-85          | Float32  |
+| 7      | 0x56-0x57      | 86-87          | Float32  |
+
+Jeder Sensor verwendet 2 Modbus-Register (32-bit Float, Big Endian).
+Zwischen den Sensoren wird ein Register übersprungen.
+
+## Fehlersuche
+
+### LCD zeigt nichts an
+- Überprüfen Sie die I2C-Adresse (Standard: 0x27)
+- Testen Sie mit einem I2C-Scanner
+- Überprüfen Sie die Verkabelung (SDA/SCL)
+
+### Keine Modbus-Daten
+- Überprüfen Sie die RS485-Verkabelung
+- Prüfen Sie Slave-ID und Baudrate
+- Überprüfen Sie das Startregister
+- Messen Sie die Spannung am DE/RE-Pin während der Übertragung
+
+### WLAN-Verbindung schlägt fehl
+- Überprüfen Sie SSID und Passwort
+- Stellen Sie sicher, dass 2.4 GHz WLAN verwendet wird (ESP32 unterstützt kein 5 GHz)
+- Überprüfen Sie die Signalstärke
+
+### Joystick reagiert nicht korrekt
+- Öffnen Sie den Serial Monitor und beobachten Sie die Rohwerte
+- Kalibrieren Sie die Schwellwerte entsprechend
+- Invertieren Sie ggf. die Achsen
 
 ## Lizenz
 
-Lizensiert unter Apache2
+Dieses Projekt steht unter der MIT-Lizenz.
+
+## Autor
+
+Erstellt für das Thermohub8-Projekt
+
+## Version
+
+1.0.0 - Erste Version
