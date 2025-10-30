@@ -5,6 +5,8 @@ The device publishes all sensor readings through a **REST API** and integrates s
 
 The goal of this project is to provide a **reliable, local, and customizable temperature monitoring system** for smart home and industrial environments — with **no cloud dependency**.
 
+![Local Image](./docs/images/overview.jpeg "Picture of the first working Prototype")
+
 ---
 
 ## 🧩 Project Overview

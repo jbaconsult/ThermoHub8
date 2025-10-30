@@ -9,6 +9,9 @@ The ThermoHub8 integration connects Home Assistant to a local REST endpoint that
 - **I/O:** Local REST API (HTTP/HTTPS)  
 - **IOT class:** `local_polling`
 
+![Local Image](../docs/images/homeassistant.jpg "The custom component at work")
+
+
 ---
 
 ## Features
